@@ -1,0 +1,4 @@
+cmake --build . -- -v
+Error: could not find CMAKE_PROJECT_NAME in Cache
+Build complete (1 errors, 0 warnings): C:\Users\samru\workspace\wifi\build
+Total time taken to build the project: 872 ms

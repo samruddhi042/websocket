@@ -1,0 +1,104 @@
+#include "ws_server.h"
+#include "mbedtls/base64.h"
+
+static const char *ws_magic_key = "258EAFA5-E914-47DA-95CA-C5AB0DC85B11";
+
+static void ws_generate_accept_key(const char *client_key, char *accept_key) {
+    char buffer[128];
+    unsigned char sha1_result[20];
+    size_t len;
+
+    snprintf(buffer, sizeof(buffer), "%s%s", client_key, ws_magic_key);
+    mbedtls_sha1_ret((const unsigned char *)buffer, strlen(buffer), sha1_result);
+    mbedtls_base64_encode((unsigned char *)accept_key, 64, &len, sha1_result, 20);
+    accept_key[len] = '\0';
+}
+
+static int ws_send_handshake(int client_sock, const char *accept_key) {
+    char response[512];
+    snprintf(response, sizeof(response),
+             "HTTP/1.1 101 Switching Protocols\r\n"
+             "Upgrade: websocket\r\n"
+             "Connection: Upgrade\r\n"
+             "Sec-WebSocket-Accept: %s\r\n\r\n",
+             accept_key);
+    return send(client_sock, response, strlen(response), 0);
+}
+
+static int ws_recv_text(int client_sock, char *buffer, int max_len) {
+    uint8_t hdr[2];
+    if (recv(client_sock, hdr, 2, 0) != 2) return -1;
+
+    int payload_len = hdr[1] & 0x7F;
+    if (payload_len > max_len - 1) return -1;
+
+    uint8_t mask[4];
+    if (recv(client_sock, mask, 4, 0) != 4) return -1;
+
+    uint8_t payload[256];
+    if (recv(client_sock, payload, payload_len, 0) != payload_len) return -1;
+
+    for (int i = 0; i < payload_len; i++)
+        buffer[i] = payload[i] ^ mask[i % 4];
+    buffer[payload_len] = '\0';
+    return payload_len;
+}
+
+static void ws_send_text(int client_sock, const char *msg) {
+    uint8_t header[2];
+    int len = strlen(msg);
+    header[0] = 0x81; // FIN + text frame
+    header[1] = len;
+
+    send(client_sock, header, 2, 0);
+    send(client_sock, msg, len, 0);
+}
+
+void ws_server_start() {
+    int sockfd, client_sock;
+    struct sockaddr_in server_addr, client_addr;
+    socklen_t client_len = sizeof(client_addr);
+
+    sockfd = socket(AF_INET, SOCK_STREAM, 0);
+    server_addr.sin_family = AF_INET;
+    server_addr.sin_addr.s_addr = htonl(INADDR_ANY);
+    server_addr.sin_port = htons(PORT);
+
+    bind(sockfd, (struct sockaddr *)&server_addr, sizeof(server_addr));
+    listen(sockfd, 5);
+    ESP_LOGI(TAG, "WebSocket server listening on port %d", PORT);
+
+    while (1) {
+        client_sock = accept(sockfd, (struct sockaddr *)&client_addr, &client_len);
+        if (client_sock < 0) continue;
+
+        ESP_LOGI(TAG, "Client connected");
+
+        char req[1024];
+        recv(client_sock, req, sizeof(req), 0);
+
+        char *key_header = strstr(req, "Sec-WebSocket-Key: ");
+        if (key_header) {
+            char client_key[128];
+            sscanf(key_header, "Sec-WebSocket-Key: %s", client_key);
+
+            char accept_key[64];
+            ws_generate_accept_key(client_key, accept_key);
+            ws_send_handshake(client_sock, accept_key);
+            ESP_LOGI(TAG, "Handshake complete");
+
+            while (1) {
+                char msg[256];
+                int len = ws_recv_text(client_sock, msg, sizeof(msg));
+                if (len <= 0) break;
+                ESP_LOGI(TAG, "Received: %s", msg);
+
+                char echo_msg[300];
+                snprintf(echo_msg, sizeof(echo_msg), "Echo: %s", msg);
+                ws_send_text(client_sock, echo_msg);
+            }
+        }
+        close(client_sock);
+        ESP_LOGI(TAG, "Client disconnected");
+    }
+}

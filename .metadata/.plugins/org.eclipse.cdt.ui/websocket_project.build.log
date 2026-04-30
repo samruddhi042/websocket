@@ -1,0 +1,6 @@
+cmake --build . -- -v
+ninja: error: loading 'build.ninja': The system cannot find the file specified.
+
+
+Build complete (0 errors, 0 warnings): C:\Users\samru\workspace\websocket_project\build
+Total time taken to build the project: 23,394 ms

@@ -1,0 +1,91 @@
+Compiling the C compiler identification source file "CMakeCCompilerId.c" failed.
+Compiler: C:/Espressif/tools/esp-clang/16.0.1-fe4f10a809/esp-clang/bin/clang.exe 
+Build flags: 
+Id flags:  
+
+The output was:
+1
+lld: error: unable to find library -lunwind
+lld: error: unable to find library -lunwind
+clang: error: linker command failed with exit code 1 (use -v to see invocation)
+
+
+Compiling the CXX compiler identification source file "CMakeCXXCompilerId.cpp" failed.
+Compiler: C:/Espressif/tools/esp-clang/16.0.1-fe4f10a809/esp-clang/bin/clang++.exe 
+Build flags: 
+Id flags:  
+
+The output was:
+1
+lld: error: unable to find library -lc++
+lld: error: unable to find library -lunwind
+lld: error: unable to find library -lunwind
+clang++: error: linker command failed with exit code 1 (use -v to see invocation)
+
+
+Detecting C compiler ABI info failed to compile with the following output:
+Change Dir: C:/Users/samru/workspace/rtos/build/default/CMakeFiles/CMakeTmp
+
+Run Build Command(s):C:/MinGW/bin/mingw32-make.exe -f Makefile cmTC_802be/fast && C:/MinGW/bin/mingw32-make.exe  -f CMakeFiles\cmTC_802be.dir\build.make CMakeFiles/cmTC_802be.dir/build
+mingw32-make.exe[1]: Entering directory 'C:/Users/samru/workspace/rtos/build/default/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_802be.dir/CMakeCCompilerABI.c.obj
+C:\Espressif\tools\esp-clang\16.0.1-fe4f10a809\esp-clang\bin\clang.exe   -v -MD -MT CMakeFiles/cmTC_802be.dir/CMakeCCompilerABI.c.obj -MF CMakeFiles\cmTC_802be.dir\CMakeCCompilerABI.c.obj.d -o CMakeFiles\cmTC_802be.dir\CMakeCCompilerABI.c.obj -c C:\Espressif\tools\cmake\3.24.0\share\cmake-3.24\Modules\CMakeCCompilerABI.c
+clang version 16.0.1 (https://github.com/espressif/llvm-project.git fe4f10a809705c2ddbed62145616bb9c85c499c0)
+Target: x86_64-w64-windows-gnu
+Thread model: posix
+InstalledDir: C:/Espressif/tools/esp-clang/16.0.1-fe4f10a809/esp-clang/bin
+ (in-process)
+ "C:/Espressif/tools/esp-clang/16.0.1-fe4f10a809/esp-clang/bin/clang.exe" -cc1 -triple x86_64-w64-windows-gnu -emit-obj -mrelax-all -disable-free -clear-ast-before-backend -disable-llvm-verifier -discard-value-names -main-file-name CMakeCCompilerABI.c -mrelocation-model pic -pic-level 2 -mframe-pointer=none -fmath-errno -ffp-contract=on -fno-rounding-math -mconstructor-aliases -mms-bitfields -funwind-tables=2 -target-cpu x86-64 -tune-cpu generic -mllvm -treat-scalable-fixed-error-as-warning -debugger-tuning=gdb -v -fcoverage-compilation-dir=C:/Users/samru/workspace/rtos/build/default/CMakeFiles/CMakeTmp -resource-dir C:/Espressif/tools/esp-clang/16.0.1-fe4f10a809/esp-clang/lib/clang/16 -dependency-file "CMakeFiles\\cmTC_802be.dir\\CMakeCCompilerABI.c.obj.d" -MT CMakeFiles/cmTC_802be.dir/CMakeCCompilerABI.c.obj -sys-header-deps -internal-isystem C:/Espressif/tools/esp-clang/16.0.1-fe4f10a809/esp-clang/lib/clang/16/include -internal-isystem C:/MinGW/mingw32/include -internal-isystem C:/MinGW/mingw32/usr/include -internal-isystem C:/MinGW/include -fdebug-compilation-dir=C:/Users/samru/workspace/rtos/build/default/CMakeFiles/CMakeTmp -ferror-limit 19 -fno-use-cxa-atexit -fgnuc-version=4.2.1 -exception-model=seh -faddrsig -o "CMakeFiles\\cmTC_802be.dir\\CMakeCCompilerABI.c.obj" -x c "C:\\Espressif\\tools\\cmake\\3.24.0\\share\\cmake-3.24\\Modules\\CMakeCCompilerABI.c"
+clang -cc1 version 16.0.1 based upon LLVM 16.0.1 default target x86_64-w64-mingw32
+ignoring nonexistent directory "C:/MinGW/mingw32/usr/include"
+#include "..." search starts here:
+#include <...> search starts here:
+ C:/Espressif/tools/esp-clang/16.0.1-fe4f10a809/esp-clang/lib/clang/16/include
+ C:/MinGW/mingw32/include
+ C:/MinGW/include
+End of search list.
+Linking C executable cmTC_802be.exe
+C:\Espressif\tools\cmake\3.24.0\bin\cmake.exe -E cmake_link_script CMakeFiles\cmTC_802be.dir\link.txt --verbose=1
+C:\Espressif\tools\cmake\3.24.0\bin\cmake.exe -E rm -f CMakeFiles\cmTC_802be.dir/objects.a
+C:\Espressif\tools\esp-clang\16.0.1-fe4f10a809\esp-clang\bin\llvm-ar.exe qc CMakeFiles\cmTC_802be.dir/objects.a @CMakeFiles\cmTC_802be.dir\objects1.rsp
+C:\Espressif\tools\esp-clang\16.0.1-fe4f10a809\esp-clang\bin\clang.exe  -v -Wl,--whole-archive CMakeFiles\cmTC_802be.dir/objects.a -Wl,--no-whole-archive -o cmTC_802be.exe -Wl,--out-implib,libcmTC_802be.dll.a -Wl,--major-image-version,0,--minor-image-version,0 
+clang version 16.0.1 (https://github.com/espressif/llvm-project.git fe4f10a809705c2ddbed62145616bb9c85c499c0)
+Target: x86_64-w64-windows-gnu
+Thread model: posix
+InstalledDir: C:/Espressif/tools/esp-clang/16.0.1-fe4f10a809/esp-clang/bin
+ "C:/Espressif/tools/esp-clang/16.0.1-fe4f10a809/esp-clang/bin/ld.lld" -m i386pep -Bdynamic -o cmTC_802be.exe C:/MinGW/lib/crt2.o C:/MinGW/lib/gcc/mingw32/6.3.0/crtbegin.o -LC:/MinGW/lib/gcc/mingw32/6.3.0 -LC:/MinGW/mingw32/lib -LC:/MinGW/mingw32/mingw/lib -LC:/MinGW/lib --whole-archive "CMakeFiles\\cmTC_802be.dir/objects.a" --no-whole-archive --out-implib libcmTC_802be.dll.a --major-image-version 0 --minor-image-version 0 -lmingw32 C:/Espressif/tools/esp-clang/16.0.1-fe4f10a809/esp-clang/lib/clang/16/lib/windows/libclang_rt.builtins-x86_64.a -lunwind -lmoldname -lmingwex -lmsvcrt -ladvapi32 -lshell32 -luser32 -lkernel32 -lmingw32 C:/Espressif/tools/esp-clang/16.0.1-fe4f10a809/esp-clang/lib/clang/16/lib/windows/libclang_rt.builtins-x86_64.a -lunwind -lmoldname -lmingwex -lmsvcrt -lkernel32 C:/MinGW/lib/gcc/mingw32/6.3.0/crtend.o
+lld: error: unable to find library -lunwind
+lld: error: unable to find library -lunwind
+clang: error: linker command failed with exit code 1 (use -v to see invocation)
+CMakeFiles\cmTC_802be.dir\build.make:99: recipe for target 'cmTC_802be.exe' failed
+mingw32-make.exe[1]: *** [cmTC_802be.exe] Error 1
+mingw32-make.exe[1]: Leaving directory 'C:/Users/samru/workspace/rtos/build/default/CMakeFiles/CMakeTmp'
+Makefile:126: recipe for target 'cmTC_802be/fast' failed
+mingw32-make.exe: *** [cmTC_802be/fast] Error 2
+
+
+
+
+Determining if the C compiler works failed with the following output:
+Change Dir: C:/Users/samru/workspace/rtos/build/default/CMakeFiles/CMakeTmp
+
+Run Build Command(s):C:/MinGW/bin/mingw32-make.exe -f Makefile cmTC_30ea2/fast && C:/MinGW/bin/mingw32-make.exe  -f CMakeFiles\cmTC_30ea2.dir\build.make CMakeFiles/cmTC_30ea2.dir/build
+mingw32-make.exe[1]: Entering directory 'C:/Users/samru/workspace/rtos/build/default/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_30ea2.dir/testCCompiler.c.obj
+C:\Espressif\tools\esp-clang\16.0.1-fe4f10a809\esp-clang\bin\clang.exe    -MD -MT CMakeFiles/cmTC_30ea2.dir/testCCompiler.c.obj -MF CMakeFiles\cmTC_30ea2.dir\testCCompiler.c.obj.d -o CMakeFiles\cmTC_30ea2.dir\testCCompiler.c.obj -c C:\Users\samru\workspace\rtos\build\default\CMakeFiles\CMakeTmp\testCCompiler.c
+Linking C executable cmTC_30ea2.exe
+C:\Espressif\tools\cmake\3.24.0\bin\cmake.exe -E cmake_link_script CMakeFiles\cmTC_30ea2.dir\link.txt --verbose=1
+C:\Espressif\tools\cmake\3.24.0\bin\cmake.exe -E rm -f CMakeFiles\cmTC_30ea2.dir/objects.a
+C:\Espressif\tools\esp-clang\16.0.1-fe4f10a809\esp-clang\bin\llvm-ar.exe qc CMakeFiles\cmTC_30ea2.dir/objects.a @CMakeFiles\cmTC_30ea2.dir\objects1.rsp
+C:\Espressif\tools\esp-clang\16.0.1-fe4f10a809\esp-clang\bin\clang.exe -Wl,--whole-archive CMakeFiles\cmTC_30ea2.dir/objects.a -Wl,--no-whole-archive -o cmTC_30ea2.exe -Wl,--out-implib,libcmTC_30ea2.dll.a -Wl,--major-image-version,0,--minor-image-version,0 @CMakeFiles\cmTC_30ea2.dir\linklibs.rsp
+lld: error: unable to find library -lunwind
+lld: error: unable to find library -lunwind
+clang: error: linker command failed with exit code 1 (use -v to see invocation)
+CMakeFiles\cmTC_30ea2.dir\build.make:100: recipe for target 'cmTC_30ea2.exe' failed
+mingw32-make.exe[1]: *** [cmTC_30ea2.exe] Error 1
+mingw32-make.exe[1]: Leaving directory 'C:/Users/samru/workspace/rtos/build/default/CMakeFiles/CMakeTmp'
+Makefile:126: recipe for target 'cmTC_30ea2/fast' failed
+mingw32-make.exe: *** [cmTC_30ea2/fast] Error 2
+
+
+

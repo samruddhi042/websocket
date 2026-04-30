@@ -1,0 +1,2 @@
+#define rtos_VERSION_MAJOR @rtos_VERSION_MAJOR@
+#define rtos_VERSION_MINOR @rtos_VERSION_MINOR@

@@ -1,0 +1,4 @@
+cmake --build . --target all
+mingw32-make.exe: Makefile: No such file or directory
+mingw32-make.exe: *** No rule to make target 'Makefile'.  Stop.
+Build complete (1 errors, 0 warnings): C:\Users\samru\workspace\rtos\build\default
