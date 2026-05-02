@@ -8,6 +8,7 @@ Incoming WebSocket frames are decoded manually, including payload length handlin
 
 Unlike typical implementations that rely on libraries like ESPAsyncWebServer, this project demonstrates a low-level understanding of the WebSocket protocol and networking stack, making it useful for learning protocol internals, debugging, and building custom communication systems.
 
+
 🔹Key Features 
 Manual WebSocket handshake (HTTP Upgrade + SHA-1 + Base64),
 Raw socket programming using lwIP (socket, bind, listen, accept),
@@ -21,5 +22,6 @@ Works with browser clients via JavaScript WebSocket API.
 
 
 -> At the end this is a low-level WebSocket server for ESP32 built using raw TCP sockets and ESP-IDF, implementing the full protocol manually and supporting real-time multi-client communication with custom frame handling.
+
 
 **Project Context** This project was developed as part of a Research & Development Cell task under TRF (The Robotics Forum) during FY Semester 2. Team Members: Samruddhi, Gargi
