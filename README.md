@@ -10,7 +10,7 @@
 
 <br/><br/>
 
-# 🔌 ESP32 WebSocket Server — Built From Scratch
+#  ESP32 WebSocket Server — Built From Scratch
 
 ### *A full-stack, low-latency, real-time WebSocket server for ESP32 — implemented from the ground up, without any high-level WebSocket libraries.*
 
@@ -20,7 +20,7 @@
 
 > *"We implemented the WebSocket protocol from scratch on a microcontroller — that means we understand SHA-1, Base64, HTTP Upgrade, TCP byte-stream framing, XOR masking, opcode parsing, and every layer from the WiFi radio up to the JavaScript browser API. That's rare. That's the point."*
 >
-> — **Samruddhi & Gargi**, ex-R&D Intern, FY Semester 2
+> — **Samruddhi & Gargi**, ex-R&D Intern(FY Semester 2)
 
 <br/>
 
