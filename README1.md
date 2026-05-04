@@ -23,7 +23,7 @@ Ping/Pong and Close frame handling,
 Works with browser clients via JavaScript WebSocket API.
 
 
--> At the end this is a low-level WebSocket server for ESP32 built using raw TCP sockets and ESP-IDF, implementing the full protocol manually and supporting real-time multi-client communication with custom frame handling.
+**At the end this is a low-level WebSocket server for ESP32 built using raw TCP sockets and ESP-IDF, implementing the full protocol manually and supporting real-time multi-client communication with custom frame handling.**
 
 
 **Project Context** This project was developed as part of a Research & Development Cell task under TRF (The Robotics Forum) during FY Semester 2. Team Members: Samruddhi, Gargi
