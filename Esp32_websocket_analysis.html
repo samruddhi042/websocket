@@ -1,0 +1,1150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ESP32 WebSocket Library – Full Project Analysis</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=Sora:wght@300;400;600;700&display=swap');
+
+  :root {
+    --bg: #0d0f14;
+    --surface: #161a23;
+    --card: #1e2330;
+    --border: #2a3045;
+    --accent: #4fffb0;
+    --accent2: #38bfff;
+    --accent3: #ff7c5c;
+    --warn: #f5c842;
+    --text: #d4daea;
+    --muted: #7a8499;
+    --code-bg: #111520;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Sora', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.75;
+    padding: 0;
+  }
+
+  .hero {
+    background: linear-gradient(135deg, #0d0f14 0%, #0e1929 50%, #0d0f14 100%);
+    border-bottom: 1px solid var(--border);
+    padding: 60px 48px 48px;
+    position: relative;
+    overflow: hidden;
+  }
+  .hero::before {
+    content: '';
+    position: absolute;
+    top: -80px; right: -80px;
+    width: 400px; height: 400px;
+    background: radial-gradient(circle, rgba(79,255,176,0.06) 0%, transparent 70%);
+    pointer-events: none;
+  }
+  .hero-tag {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--accent);
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    margin-bottom: 12px;
+  }
+  .hero h1 {
+    font-size: 38px;
+    font-weight: 700;
+    line-height: 1.2;
+    color: #fff;
+    margin-bottom: 12px;
+  }
+  .hero h1 span { color: var(--accent); }
+  .hero-sub {
+    font-size: 15px;
+    color: var(--muted);
+    max-width: 640px;
+    margin-bottom: 28px;
+  }
+  .meta-pills {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+  .pill {
+    font-size: 12px;
+    font-family: 'JetBrains Mono', monospace;
+    padding: 4px 14px;
+    border-radius: 20px;
+    border: 1px solid;
+  }
+  .pill.green { border-color: var(--accent); color: var(--accent); background: rgba(79,255,176,0.05); }
+  .pill.blue  { border-color: var(--accent2); color: var(--accent2); background: rgba(56,191,255,0.05); }
+  .pill.red   { border-color: var(--accent3); color: var(--accent3); background: rgba(255,124,92,0.05); }
+  .pill.gold  { border-color: var(--warn); color: var(--warn); background: rgba(245,200,66,0.05); }
+
+  .container { max-width: 1000px; margin: 0 auto; padding: 0 32px 80px; }
+
+  /* TOC */
+  .toc {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 28px 32px;
+    margin: 40px 0;
+  }
+  .toc h2 {
+    font-size: 12px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--muted);
+    font-family: 'JetBrains Mono', monospace;
+    margin-bottom: 16px;
+  }
+  .toc ol {
+    column-count: 2;
+    column-gap: 40px;
+    list-style: decimal;
+    padding-left: 20px;
+  }
+  .toc li { margin-bottom: 6px; }
+  .toc a {
+    color: var(--accent2);
+    text-decoration: none;
+    font-size: 14px;
+  }
+  .toc a:hover { color: var(--accent); }
+
+  /* Sections */
+  .section { margin-top: 56px; }
+  .section-header {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 24px;
+    padding-bottom: 14px;
+    border-bottom: 1px solid var(--border);
+  }
+  .section-num {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    color: var(--muted);
+    min-width: 28px;
+  }
+  .section h2 {
+    font-size: 22px;
+    font-weight: 600;
+    color: #fff;
+  }
+  .section h3 {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--accent2);
+    margin: 28px 0 10px;
+  }
+  .section p { font-size: 15px; color: var(--text); margin-bottom: 12px; }
+
+  /* File cards */
+  .file-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    margin-bottom: 20px;
+    overflow: hidden;
+  }
+  .file-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 20px;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+  }
+  .file-icon {
+    width: 32px; height: 32px;
+    border-radius: 6px;
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    font-weight: 600;
+  }
+  .fi-c   { background: rgba(56,191,255,0.12); color: var(--accent2); }
+  .fi-cpp { background: rgba(79,255,176,0.12); color: var(--accent); }
+  .fi-h   { background: rgba(245,200,66,0.12); color: var(--warn); }
+  .fi-bt  { background: rgba(255,124,92,0.12); color: var(--accent3); }
+
+  .file-name {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    color: #fff;
+    font-weight: 600;
+  }
+  .file-path {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--muted);
+    margin-left: auto;
+  }
+  .file-body { padding: 16px 20px; }
+  .file-body p { font-size: 14px; margin-bottom: 8px; }
+
+  .tag-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin: 10px 0;
+  }
+  .tag {
+    font-size: 11px;
+    font-family: 'JetBrains Mono', monospace;
+    padding: 2px 10px;
+    border-radius: 4px;
+    border: 1px solid var(--border);
+    color: var(--muted);
+  }
+  .tag.pro  { border-color: rgba(79,255,176,0.4); color: var(--accent); }
+  .tag.con  { border-color: rgba(255,124,92,0.4); color: var(--accent3); }
+  .tag.note { border-color: rgba(245,200,66,0.4); color: var(--warn); }
+
+  /* Comparison table */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+    margin: 16px 0;
+  }
+  th {
+    text-align: left;
+    padding: 10px 16px;
+    background: var(--surface);
+    color: var(--muted);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 1px;
+    border-bottom: 1px solid var(--border);
+  }
+  td {
+    padding: 10px 16px;
+    border-bottom: 1px solid var(--border);
+    vertical-align: top;
+  }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: rgba(255,255,255,0.02); }
+
+  /* Concept boxes */
+  .concept {
+    background: var(--surface);
+    border-left: 3px solid var(--accent);
+    border-radius: 0 8px 8px 0;
+    padding: 16px 20px;
+    margin: 16px 0;
+    font-size: 14px;
+  }
+  .concept.blue { border-color: var(--accent2); }
+  .concept.red  { border-color: var(--accent3); }
+  .concept.gold { border-color: var(--warn); }
+  .concept strong { color: #fff; display: block; margin-bottom: 6px; font-size: 15px; }
+
+  /* Progress timeline */
+  .timeline {
+    position: relative;
+    padding-left: 32px;
+    margin: 24px 0;
+  }
+  .timeline::before {
+    content: '';
+    position: absolute;
+    left: 9px; top: 8px; bottom: 8px;
+    width: 2px;
+    background: linear-gradient(to bottom, var(--accent), var(--accent2));
+    border-radius: 2px;
+  }
+  .tl-item {
+    position: relative;
+    margin-bottom: 28px;
+  }
+  .tl-dot {
+    position: absolute;
+    left: -32px; top: 4px;
+    width: 18px; height: 18px;
+    border-radius: 50%;
+    border: 2px solid var(--accent);
+    background: var(--bg);
+    display: flex; align-items: center; justify-content: center;
+  }
+  .tl-dot span {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px;
+    color: var(--accent);
+    font-weight: 600;
+  }
+  .tl-item h4 {
+    font-size: 15px;
+    color: #fff;
+    font-weight: 600;
+    margin-bottom: 4px;
+  }
+  .tl-item p { font-size: 13px; color: var(--muted); }
+
+  /* Code snippet */
+  .code-snippet {
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 16px 20px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    color: #c9d1d9;
+    overflow-x: auto;
+    margin: 12px 0;
+    line-height: 1.6;
+  }
+  .code-snippet .kw  { color: #ff7c5c; }
+  .code-snippet .fn  { color: #4fffb0; }
+  .code-snippet .cm  { color: #545d70; font-style: italic; }
+  .code-snippet .str { color: #f5c842; }
+  .code-snippet .num { color: #38bfff; }
+
+  /* Grid */
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .grid3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
+
+  .stat-box {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 20px;
+    text-align: center;
+  }
+  .stat-box .num { font-size: 32px; font-weight: 700; color: var(--accent); font-family: 'JetBrains Mono', monospace; }
+  .stat-box .label { font-size: 12px; color: var(--muted); margin-top: 4px; }
+
+  .flag-badge {
+    display: inline-block;
+    background: rgba(79,255,176,0.08);
+    border: 1px solid rgba(79,255,176,0.2);
+    border-radius: 6px;
+    padding: 2px 10px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    color: var(--accent);
+    margin: 2px;
+  }
+
+  .interview-q {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 16px 20px;
+    margin: 12px 0;
+  }
+  .interview-q .q {
+    font-weight: 600;
+    color: var(--warn);
+    margin-bottom: 8px;
+    font-size: 14px;
+  }
+  .interview-q .a { font-size: 14px; color: var(--text); }
+
+  @media (max-width: 680px) {
+    .hero { padding: 40px 24px 32px; }
+    .hero h1 { font-size: 26px; }
+    .toc ol { column-count: 1; }
+    .grid2, .grid3 { grid-template-columns: 1fr; }
+    .container { padding: 0 20px 60px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="hero">
+  <div class="hero-tag">// TRF R&D Internship — Full Code Analysis</div>
+  <h1>ESP32 <span>WebSocket</span> Library<br>360° Technical Deep Dive</h1>
+  <p class="hero-sub">
+    Complete analysis of every file, folder and concept — from raw TCP sockets to OOP design, Nagle's algorithm, FreeRTOS tasks, Bluetooth L2CAP, and latency optimisation. By Samruddhi &amp; Gargi.
+  </p>
+  <div class="meta-pills">
+    <span class="pill green">ESP-IDF · lwIP · FreeRTOS</span>
+    <span class="pill blue">WebSocket RFC 6455</span>
+    <span class="pill red">mbedTLS · SHA-1 · Base64</span>
+    <span class="pill gold">TCP_NODELAY · Nagle's Algo</span>
+    <span class="pill blue">Bluetooth L2CAP · SDP</span>
+    <span class="pill green">C + C++ OOP</span>
+  </div>
+</div>
+
+<div class="container">
+
+  <div class="toc">
+    <h2>// Contents</h2>
+    <ol>
+      <li><a href="#foundation">Foundation Concepts (TCP/UDP/Sockets)</a></li>
+      <li><a href="#evolution">Project Evolution Timeline</a></li>
+      <li><a href="#1stlab">1stLab — Basic Linux TCP</a></li>
+      <li><a href="#socketcreation">socketcreation.c — ESP32 AP Server</a></li>
+      <li><a href="#socket1">socket1 — Client/Server Split</a></li>
+      <li><a href="#tcp_example">tcp_example — Refined TCP</a></li>
+      <li><a href="#wifi">wifi — WiFi Station Boilerplate</a></li>
+      <li><a href="#handshake1">websocket_handshake — First WS Server</a></li>
+      <li><a href="#handshake2">websocket_handshake2 — select() Multi-client</a></li>
+      <li><a href="#ws_project">websocket_project — Structured Library</a></li>
+      <li><a href="#oop">esp32_websocket_oop — OOP Single File</a></li>
+      <li><a href="#cpp">esp32_websocket_cpp — Fully Modular C++</a></li>
+      <li><a href="#rtos">rtos — RTOS Experiment</a></li>
+      <li><a href="#bt">bt_l2cap_server — Bluetooth Alternative</a></li>
+      <li><a href="#concepts">Core Concepts Explained</a></li>
+      <li><a href="#interview">Interview Q&amp;A Prep</a></li>
+      <li><a href="#enhancements">Enhancements &amp; GitHub Tips</a></li>
+    </ol>
+  </div>
+
+  <!-- ================================================ -->
+  <div class="section" id="foundation">
+    <div class="section-header"><span class="section-num">01</span><h2>Foundation Concepts You Built Upon</h2></div>
+
+    <p>Your entire project is built on three pillars. Understanding these deeply will win you any interview question on networking.</p>
+
+    <div class="grid3">
+      <div class="concept">
+        <strong>TCP (SOCK_STREAM)</strong>
+        Connection-oriented. Guarantees delivery, ordering, and error-checking. You used this for WebSocket — correct, because WS requires reliability. The cost is latency from ACKs and congestion control.
+      </div>
+      <div class="concept blue">
+        <strong>UDP (SOCK_DGRAM)</strong>
+        Connectionless. No delivery guarantee, no ordering, no handshake. Lower latency, higher packet loss. Used in gaming, live video, DNS. You did NOT use UDP — but understanding why helps justify TCP for WS.
+      </div>
+      <div class="concept gold">
+        <strong>TCP Flags</strong>
+        SYN (initiate), SYN-ACK (server agrees), ACK (confirm), FIN (close gracefully), RST (hard reset). The 3-way handshake (SYN→SYN-ACK→ACK) is what happens before your WebSocket can even start.
+      </div>
+    </div>
+
+    <h3>The BSD Socket API — Every function you used, explained</h3>
+    <table>
+      <tr><th>Function</th><th>What it does</th><th>Analogy</th></tr>
+      <tr><td><code>socket()</code></td><td>Creates a socket file descriptor (just a number). Doesn't connect yet.</td><td>Opening a post box</td></tr>
+      <tr><td><code>bind()</code></td><td>Attaches socket to an IP:PORT so the OS knows to route packets there.</td><td>Writing your address on the box</td></tr>
+      <tr><td><code>listen()</code></td><td>Puts server socket into passive mode, queues up to N incoming connections.</td><td>Opening the post box for deliveries</td></tr>
+      <tr><td><code>accept()</code></td><td>Blocks until a client connects; returns a NEW socket just for that client.</td><td>Physically meeting the delivery person</td></tr>
+      <tr><td><code>connect()</code></td><td>Client initiates the 3-way TCP handshake to the server.</td><td>Walking to someone's door and knocking</td></tr>
+      <tr><td><code>send()/recv()</code></td><td>Write/read bytes over the connected socket.</td><td>Talking once the door is open</td></tr>
+      <tr><td><code>close()</code></td><td>Sends FIN; initiates graceful connection teardown.</td><td>Saying goodbye and closing the door</td></tr>
+      <tr><td><code>setsockopt()</code></td><td>Configures socket options — e.g. TCP_NODELAY, SO_REUSEADDR.</td><td>Adjusting delivery preferences</td></tr>
+      <tr><td><code>select()</code></td><td>Monitors multiple file descriptors simultaneously — blocks until one is ready.</td><td>A receptionist watching multiple phone lines</td></tr>
+    </table>
+
+    <div class="concept gold">
+      <strong>SO_REUSEADDR — why it matters</strong>
+      When you kill and restart a server, the old port stays in TIME_WAIT for ~60 seconds. Without SO_REUSEADDR, bind() fails. You correctly added this in websocket_handshake2. Crucial for development.
+    </div>
+  </div>
+
+  <!-- ================================================ -->
+  <div class="section" id="evolution">
+    <div class="section-header"><span class="section-num">02</span><h2>Project Evolution — What You Built, Step by Step</h2></div>
+
+    <div class="timeline">
+      <div class="tl-item">
+        <div class="tl-dot"><span>1</span></div>
+        <h4>1stLab — Linux hello-world (clientCN.c + serverCN.c)</h4>
+        <p>Understand raw BSD sockets in isolation. No WiFi, no ESP32 — just Linux loopback on port 8080.</p>
+      </div>
+      <div class="tl-item">
+        <div class="tl-dot"><span>2</span></div>
+        <h4>socketcreation.c — First ESP32 TCP server with WiFi AP</h4>
+        <p>Ported socket concept to ESP-IDF. ESP32 creates its own WiFi hotspot, phones connect to it, TCP echo server.</p>
+      </div>
+      <div class="tl-item">
+        <div class="tl-dot"><span>3</span></div>
+        <h4>socket1 / tcp_example — ESP32 TCP client + server split</h4>
+        <p>Separated client and server into distinct tasks. Introduced FreeRTOS xTaskCreate for concurrent operation.</p>
+      </div>
+      <div class="tl-item">
+        <div class="tl-dot"><span>4</span></div>
+        <h4>wifi — Standalone WiFi station module</h4>
+        <p>Isolated WiFi connection logic into a reusable boilerplate — used in every subsequent project.</p>
+      </div>
+      <div class="tl-item">
+        <div class="tl-dot"><span>5</span></div>
+        <h4>websocket_handshake — First full WebSocket server</h4>
+        <p>Implemented HTTP Upgrade handshake, SHA-1+Base64 key, frame parsing (FIN, opcode, masking), TCP_NODELAY, WIFI_PS_NONE.</p>
+      </div>
+      <div class="tl-item">
+        <div class="tl-dot"><span>6</span></div>
+        <h4>websocket_handshake2 — select()-based multi-client (no threads)</h4>
+        <p>Replaced per-client FreeRTOS tasks with a single-thread select() event loop. Persistent payload buffer, MSG_DONTWAIT.</p>
+      </div>
+      <div class="tl-item">
+        <div class="tl-dot"><span>7</span></div>
+        <h4>websocket_project — Modular C library (wifi.c + ws_server.c)</h4>
+        <p>Separated WiFi and WebSocket into .c/.h modules. Clean API: wifi_init_sta() + ws_server_start(). main.c is just 2 lines.</p>
+      </div>
+      <div class="tl-item">
+        <div class="tl-dot"><span>8</span></div>
+        <h4>esp32_websocket_oop — OOP C++ single file</h4>
+        <p>WiFiManager, WebSocketServer, WebSocketClient as C++ classes. Recursive accept_client(). All in one file.</p>
+      </div>
+      <div class="tl-item">
+        <div class="tl-dot"><span>9</span></div>
+        <h4>esp32_websocket_cpp — Fully modular OOP C++ (final form)</h4>
+        <p>Classes split into separate .cpp + .h files. WebSocketHandler uses heap-allocated objects with lambda tasks. Production-grade architecture.</p>
+      </div>
+      <div class="tl-item">
+        <div class="tl-dot"><span>10</span></div>
+        <h4>bt_l2cap_server — Bluetooth Classic L2CAP alternative</h4>
+        <p>Explored Bluetooth as a WiFi alternative for low-latency communication. Uses SDP, GAP, L2CAP, and FreeRTOS message queues.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================================================ -->
+  <div class="section" id="1stlab">
+    <div class="section-header"><span class="section-num">03</span><h2>1stLab — clientCN.c + serverCN.c</h2></div>
+    <p>Your starting point. Pure POSIX C, runs on Linux, demonstrates every fundamental socket concept before touching the ESP32.</p>
+
+    <div class="file-card">
+      <div class="file-header">
+        <div class="file-icon fi-c">.C</div>
+        <span class="file-name">serverCN.c</span>
+        <span class="file-path">1stLab/</span>
+      </div>
+      <div class="file-body">
+        <p><strong>What it does:</strong> Creates a TCP server on port 8080. Binds, listens, accepts ONE client. Reads a message, sends "Hello from server", closes.</p>
+        <div class="tag-row">
+          <span class="tag pro">✓ SO_REUSEADDR + SO_REUSEPORT — correct for dev</span>
+          <span class="tag pro">✓ INADDR_ANY — listens on all interfaces</span>
+          <span class="tag con">✗ Single-client only — no loop after accept()</span>
+          <span class="tag note">⚠ No error handling on send/recv return values</span>
+        </div>
+        <p><strong>Key learning:</strong> The <code>listen(server_fd, 3)</code> backlog of 3 means the OS will queue up to 3 pending connections waiting to be accept()-ed. If a 4th client connects, it gets RST.</p>
+      </div>
+    </div>
+
+    <div class="file-card">
+      <div class="file-header">
+        <div class="file-icon fi-c">.C</div>
+        <span class="file-name">clientCN.c</span>
+        <span class="file-path">1stLab/</span>
+      </div>
+      <div class="file-body">
+        <p><strong>What it does:</strong> Creates a TCP client, connects to 127.0.0.1:8080, sends "Hello from client", reads response, closes.</p>
+        <div class="tag-row">
+          <span class="tag pro">✓ inet_pton() — portable IP conversion (vs. deprecated inet_addr)</span>
+          <span class="tag con">✗ No retry on connection failure</span>
+          <span class="tag note">⚠ read() return value stored but not checked for -1</span>
+        </div>
+        <p><strong>Why inet_pton?</strong> <code>inet_pton(AF_INET, "127.0.0.1", &addr)</code> converts the string to a 32-bit binary network address. <code>inet_addr()</code> is deprecated because it can't distinguish failure from the address 255.255.255.255.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================================================ -->
+  <div class="section" id="socketcreation">
+    <div class="section-header"><span class="section-num">04</span><h2>socketcreation.c — ESP32 WiFi AP + TCP Echo Server</h2></div>
+
+    <div class="file-card">
+      <div class="file-header">
+        <div class="file-icon fi-c">.C</div>
+        <span class="file-name">main.c</span>
+        <span class="file-path">socketcreation.c/main/</span>
+      </div>
+      <div class="file-body">
+        <p><strong>What it does:</strong> ESP32 runs as a WiFi Access Point (AP) with SSID "Doraemon". Devices connect to it, then connect via TCP to 192.168.4.1:3333. Any message sent is echoed back.</p>
+
+        <p><strong>WiFi AP Mode vs STA Mode:</strong></p>
+        <div class="grid2">
+          <div class="concept">
+            <strong>AP Mode (Access Point)</strong>
+            ESP32 creates its own WiFi network. Other devices join it. ESP32 gets IP 192.168.4.1 by default. Good for standalone scenarios — no router needed. Used in socketcreation.c.
+          </div>
+          <div class="concept blue">
+            <strong>STA Mode (Station)</strong>
+            ESP32 joins an existing WiFi network like any other device. Gets IP from router DHCP. Used in ALL later projects — needed to be on the same network as your laptop.
+          </div>
+        </div>
+
+        <div class="tag-row">
+          <span class="tag pro">✓ First ESP-IDF TCP socket — correct use of lwIP</span>
+          <span class="tag pro">✓ NVS flash init — required for WiFi credentials storage</span>
+          <span class="tag pro">✓ FreeRTOS task (xTaskCreate) — non-blocking app_main</span>
+          <span class="tag con">✗ bind() return value not checked</span>
+          <span class="tag con">✗ Only one client at a time in outer while loop</span>
+          <span class="tag note">⚠ Hardcoded credentials — fine for dev, not for production</span>
+        </div>
+
+        <p><strong>NVS (Non-Volatile Storage):</strong> ESP32 stores WiFi config and other data in flash memory using a key-value store. <code>nvs_flash_init()</code> must always be called before WiFi init — if flash is full or corrupted, erase and reinit.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================================================ -->
+  <div class="section" id="socket1">
+    <div class="section-header"><span class="section-num">05</span><h2>socket1 — Client + Server as Separate Modules</h2></div>
+
+    <div class="file-card">
+      <div class="file-header">
+        <div class="file-icon fi-c">.C</div>
+        <span class="file-name">main.c + socket1_server.c + socket1_client.c</span>
+        <span class="file-path">socket1/main/</span>
+      </div>
+      <div class="file-body">
+        <p><strong>Architecture:</strong> main.c reads a <code>mode</code> variable (1=server, 2=client) and spawns the appropriate FreeRTOS task. The logic is split into two .c files but both have their own <code>app_main()</code> — a sign this was still experimental (only one <code>app_main</code> can exist).</p>
+
+        <div class="concept gold">
+          <strong>FreeRTOS xTaskCreate — critical parameters</strong>
+          <code>xTaskCreate(tcp_server_task, "tcp_server_task", 4096, NULL, 5, NULL)</code><br>
+          Stack = 4096 bytes, Priority = 5. FreeRTOS tasks on ESP32 are preemptive. If you allocate too little stack, you get stack overflow crashes. 4096 bytes is the minimum for socket operations.
+        </div>
+
+        <div class="tag-row">
+          <span class="tag pro">✓ Good modular thinking — separating client/server</span>
+          <span class="tag con">✗ Both files have app_main — compile-time conflict</span>
+          <span class="tag con">✗ wifi_init_config (not initialised) — would fail at runtime</span>
+          <span class="tag note">⚠ Mode switch is compile-time hardcode (int mode = 1)</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================================================ -->
+  <div class="section" id="tcp_example">
+    <div class="section-header"><span class="section-num">06</span><h2>tcp_example — Polished TCP Client + Server</h2></div>
+    <p>A cleanup of socket1 with Gargi's WiFi credentials (gargi04**2006). The tcp_client.c and tcp_server.c are clean implementations. Same architectural issue with multiple app_main but the logic is cleaner.</p>
+    <div class="concept">
+      <strong>Key insight from tcp_client.c / tcp_example</strong>
+      You used <code>inet_pton(AF_INET, SERVER_IP, &server_addr.sin_addr)</code> — correct approach for connecting to a known IP. The <code>htons()</code> call on the port number converts host byte order to network byte order (big-endian) — critical for cross-platform compatibility.
+    </div>
+  </div>
+
+  <!-- ================================================ -->
+  <div class="section" id="wifi">
+    <div class="section-header"><span class="section-num">07</span><h2>wifi — WiFi Station Boilerplate Module</h2></div>
+
+    <div class="file-card">
+      <div class="file-header">
+        <div class="file-icon fi-c">.C</div>
+        <span class="file-name">main.c</span>
+        <span class="file-path">wifi/main/</span>
+      </div>
+      <div class="file-body">
+        <p><strong>What it does:</strong> Minimal ESP32 WiFi STA mode connection. This is the template you extracted and reused in every subsequent project.</p>
+        <p><strong>Sequence:</strong> esp_netif_init → esp_event_loop_create_default → esp_netif_create_default_wifi_sta → esp_wifi_init → esp_wifi_set_mode(STA) → esp_wifi_set_config → esp_wifi_start → esp_wifi_connect</p>
+        <div class="tag-row">
+          <span class="tag note">⚠ No event handler to detect WIFI_EVENT_STA_CONNECTED — no way to know when IP is assigned</span>
+          <span class="tag note">⚠ No vTaskDelay before socket operations — socket bind may run before IP is obtained</span>
+        </div>
+        <div class="concept red">
+          <strong>The race condition problem you solved later</strong>
+          After esp_wifi_connect(), the IP assignment is async. In websocket_handshake, you added a vTaskDelay implicitly by putting the socket code after WiFi start — but the clean fix is registering an event handler for IP_EVENT_STA_GOT_IP and using an EventGroup bit to signal readiness.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================================================ -->
+  <div class="section" id="handshake1">
+    <div class="section-header"><span class="section-num">08</span><h2>websocket_handshake — The Core Achievement</h2></div>
+    <p>This is where the real work happened. You implemented the entire WebSocket protocol from scratch. Let's break every part down.</p>
+
+    <div class="file-card">
+      <div class="file-header">
+        <div class="file-icon fi-c">.C</div>
+        <span class="file-name">main.c</span>
+        <span class="file-path">websocket_handshake/main/</span>
+      </div>
+      <div class="file-body">
+
+        <h3 style="margin-top:0">The WebSocket Handshake — Step by Step</h3>
+        <div class="timeline" style="margin-top:16px">
+          <div class="tl-item">
+            <div class="tl-dot"><span>1</span></div>
+            <h4>Browser sends HTTP Upgrade Request</h4>
+            <p>Contains: GET / HTTP/1.1, Upgrade: websocket, Connection: Upgrade, Sec-WebSocket-Key: [random base64 string]</p>
+          </div>
+          <div class="tl-item">
+            <div class="tl-dot"><span>2</span></div>
+            <h4>ESP32 extracts the Sec-WebSocket-Key</h4>
+            <p>Your strcasestr_custom() does case-insensitive search for "Sec-WebSocket-Key: " in the raw HTTP buffer. Then reads until \r\n.</p>
+          </div>
+          <div class="tl-item">
+            <div class="tl-dot"><span>3</span></div>
+            <h4>Concatenate key + GUID</h4>
+            <p>Append the magic string "258EAFA5-E914-47DA-95CA-C5AB0DC85B11" (defined in RFC 6455) to the client's key.</p>
+          </div>
+          <div class="tl-item">
+            <div class="tl-dot"><span>4</span></div>
+            <h4>SHA-1 hash the combined string</h4>
+            <p>mbedtls_sha1() produces a 20-byte hash. This is the same library used for TLS — Espressif ships it with ESP-IDF.</p>
+          </div>
+          <div class="tl-item">
+            <div class="tl-dot"><span>5</span></div>
+            <h4>Base64 encode the SHA-1 hash</h4>
+            <p>mbedtls_base64_encode() converts the 20 binary bytes into ~28 printable characters — the Sec-WebSocket-Accept header value.</p>
+          </div>
+          <div class="tl-item">
+            <div class="tl-dot"><span>6</span></div>
+            <h4>Send HTTP 101 Switching Protocols</h4>
+            <p>After this response, the TCP connection is promoted to a WebSocket channel. All subsequent data uses WS frame format — not HTTP.</p>
+          </div>
+        </div>
+
+        <h3>WebSocket Frame Parsing — What Your Code Does</h3>
+        <div class="code-snippet">
+<span class="cm">// Read first 2 bytes of frame header</span>
+<span class="kw">uint8_t</span> opcode = hdr[<span class="num">0</span>] & <span class="num">0x0F</span>;  <span class="cm">// low 4 bits of byte 0</span>
+<span class="kw">uint8_t</span> mask   = (hdr[<span class="num">1</span>] >> <span class="num">7</span>) & <span class="num">1</span>; <span class="cm">// bit 7 of byte 1</span>
+<span class="kw">uint64_t</span> plen  = hdr[<span class="num">1</span>] & <span class="num">0x7F</span>;   <span class="cm">// low 7 bits of byte 1</span>
+
+<span class="cm">// If plen == 126: next 2 bytes are actual length</span>
+<span class="cm">// If plen == 127: next 8 bytes are actual length</span>
+<span class="cm">// Opcode 0x1 = text, 0x2 = binary</span>
+<span class="cm">// Opcode 0x8 = close, 0x9 = ping, 0xA = pong</span>
+<span class="cm">// Bit 7 of byte 0 = FIN bit (1 = complete frame)</span>
+        </div>
+
+        <h3>Latency Optimisations in This File</h3>
+        <div class="grid2">
+          <div class="concept">
+            <strong>TCP_NODELAY (Nagle's Algorithm Disabled)</strong>
+            <div class="flag-badge">TCP_NODELAY = 1</div>
+            By default, TCP buffers small packets and waits to batch them (Nagle's algorithm). This adds up to 40ms of extra latency per message. Setting TCP_NODELAY forces immediate send. This is THE most important latency fix for your use case.
+          </div>
+          <div class="concept blue">
+            <strong>WIFI_PS_NONE (Power Saving Off)</strong>
+            <div class="flag-badge">WIFI_PS_NONE</div>
+            By default, ESP32 WiFi sleeps between beacon intervals (~100ms) to save power. This adds random delays to every packet. Disabling power save keeps the radio always-on. Adds ~100mA power draw but cuts latency dramatically.
+          </div>
+        </div>
+
+        <div class="tag-row">
+          <span class="tag pro">✓ TCP_NODELAY — kills Nagle latency</span>
+          <span class="tag pro">✓ WIFI_PS_NONE — kills WiFi sleep latency</span>
+          <span class="tag pro">✓ Per-client FreeRTOS task — true concurrency</span>
+          <span class="tag pro">✓ Ping/Pong opcode handling (0x9 / 0xA)</span>
+          <span class="tag pro">✓ Close frame handling (opcode 0x8)</span>
+          <span class="tag pro">✓ Dynamic malloc for payload — handles variable length</span>
+          <span class="tag con">✗ malloc without free on error paths — memory leak</span>
+          <span class="tag con">✗ recv() used multiple times — partial read possible under load</span>
+          <span class="tag con">✗ No timeout on recv — client can hang the task forever</span>
+          <span class="tag note">⚠ WiFi connect is async — socket server could start before IP is ready</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================================================ -->
+  <div class="section" id="handshake2">
+    <div class="section-header"><span class="section-num">09</span><h2>websocket_handshake2 — select()-based Multi-client</h2></div>
+
+    <div class="file-card">
+      <div class="file-header">
+        <div class="file-icon fi-c">.C</div>
+        <span class="file-name">main.c</span>
+        <span class="file-path">websocket_handshake2/main/</span>
+      </div>
+      <div class="file-body">
+        <p><strong>What changed:</strong> Instead of spawning a FreeRTOS task per client, this version uses a single event loop with <code>select()</code> to monitor all client sockets simultaneously. Supports up to 5 clients (MAX_CLIENTS = 5).</p>
+
+        <div class="concept">
+          <strong>select() vs FreeRTOS Tasks — The Fundamental Trade-off</strong>
+        </div>
+        <table>
+          <tr><th>Aspect</th><th>FreeRTOS Task per Client</th><th>select() Event Loop</th></tr>
+          <tr><td>Multi-client handling</td><td>One task per client, truly parallel</td><td>Single task, round-robin polling</td></tr>
+          <tr><td>Memory</td><td>~4-8KB stack per client</td><td>Single task stack, O(1)</td></tr>
+          <tr><td>Latency</td><td>Best — each client gets dedicated CPU</td><td>Slightly higher — serialised</td></tr>
+          <tr><td>Scalability</td><td>Limited by RAM (ESP32 has ~320KB)</td><td>Limited only by open file descriptors</td></tr>
+          <tr><td>Blocking I/O</td><td>OK — blocks only this task</td><td>Must use MSG_DONTWAIT or non-blocking</td></tr>
+          <tr><td>Code complexity</td><td>Simple per-client code</td><td>More complex state management</td></tr>
+        </table>
+
+        <p><strong>Key implementation details:</strong></p>
+        <p>The <code>clients[]</code> array tracks active sockets. <code>fd_set</code> is a bitmask of file descriptors to watch. <code>select(max_fd+1, &read_fds, NULL, NULL, &tv)</code> — the first arg must be max_fd+1 (a common bug is forgetting the +1). The 5ms timeout (<code>tv_usec = 5000</code>) prevents busy-waiting.</p>
+
+        <div class="concept blue">
+          <strong>Persistent payload_buf</strong>
+          Unlike handshake1 which malloc'd per frame, handshake2 uses a global <code>uint8_t payload_buf[MAX_PAYLOAD_LEN+1]</code>. This avoids heap fragmentation on the ESP32 — critical for long-running embedded systems. The downside is it's not re-entrant (which is fine for a single-thread event loop).
+        </div>
+
+        <div class="tag-row">
+          <span class="tag pro">✓ select() — no FreeRTOS task per client</span>
+          <span class="tag pro">✓ SO_REUSEADDR — proper port reuse</span>
+          <span class="tag pro">✓ TCP_NODELAY on every accepted socket</span>
+          <span class="tag pro">✓ Persistent buffer — no malloc in hot path</span>
+          <span class="tag pro">✓ MSG_DONTWAIT — non-blocking recv</span>
+          <span class="tag con">✗ clients[].active never set to 0 on disconnect</span>
+          <span class="tag con">✗ No broadcast to all clients (only echo back)</span>
+          <span class="tag note">⚠ max_fd tracking is naive — could use a sorted structure</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================================================ -->
+  <div class="section" id="ws_project">
+    <div class="section-header"><span class="section-num">10</span><h2>websocket_project — Modular C Library</h2></div>
+
+    <div class="grid2">
+      <div class="file-card">
+        <div class="file-header">
+          <div class="file-icon fi-h">.H</div>
+          <span class="file-name">wifi.h + wifi.c</span>
+        </div>
+        <div class="file-body">
+          <p>Declares and implements <code>wifi_init_sta()</code>. Clean abstraction — main.c doesn't need to know any WiFi API details.</p>
+          <p><strong>Pattern used:</strong> Single-header guard with <code>#pragma once</code>, include only what you expose.</p>
+        </div>
+      </div>
+      <div class="file-card">
+        <div class="file-header">
+          <div class="file-icon fi-h">.H</div>
+          <span class="file-name">ws_server.h + ws_server.c</span>
+        </div>
+        <div class="file-body">
+          <p>4 internal functions: <code>ws_generate_accept_key()</code>, <code>ws_send_handshake()</code>, <code>ws_recv_text()</code>, <code>ws_send_text()</code>. Only <code>ws_server_start()</code> is public.</p>
+          <p><strong>Pattern:</strong> <code>static</code> on internal functions — C's version of private.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="file-card">
+      <div class="file-header">
+        <div class="file-icon fi-c">.C</div>
+        <span class="file-name">main.c</span>
+        <span class="file-path">websocket_project/main/</span>
+      </div>
+      <div class="file-body">
+        <div class="code-snippet">
+<span class="kw">#include</span> <span class="str">"wifi.h"</span>
+<span class="kw">#include</span> <span class="str">"ws_server.h"</span>
+
+<span class="kw">void</span> <span class="fn">app_main</span>(<span class="kw">void</span>) {
+    <span class="fn">wifi_init_sta</span>();     <span class="cm">// Connect to WiFi</span>
+    <span class="fn">ws_server_start</span>();   <span class="cm">// Start WebSocket server</span>
+}
+        </div>
+        <p>Two lines. This is the correct architecture for an embedded library. The implementation complexity is hidden.</p>
+        <div class="tag-row">
+          <span class="tag con">✗ ws_recv_text() always expects masked frames — server-to-server would break</span>
+          <span class="tag con">✗ No multi-client support — blocks on one client</span>
+          <span class="tag con">✗ ws_send_text() sends two separate send() calls — should use MSG_MORE or writev()</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================================================ -->
+  <div class="section" id="oop">
+    <div class="section-header"><span class="section-num">11</span><h2>esp32_websocket_oop — OOP C++ Single File</h2></div>
+
+    <div class="file-card">
+      <div class="file-header">
+        <div class="file-icon fi-cpp">.CPP</div>
+        <span class="file-name">main.cpp</span>
+        <span class="file-path">esp32_websocket_oop/main/</span>
+      </div>
+      <div class="file-body">
+        <p><strong>Three classes in one file:</strong></p>
+        <table>
+          <tr><th>Class</th><th>Responsibility</th><th>Key methods</th></tr>
+          <tr><td><code>Utils</code></td><td>Static utility — case-insensitive strstr</td><td><code>strcasestr_custom()</code></td></tr>
+          <tr><td><code>WiFiManager</code></td><td>WiFi init and connect</td><td><code>init()</code></td></tr>
+          <tr><td><code>WebSocketClient</code></td><td>Per-client handshake + frame loop</td><td><code>handle()</code></td></tr>
+          <tr><td><code>WebSocketServer</code></td><td>Socket creation, accept, task spawn</td><td><code>start()</code>, <code>accept_client()</code></td></tr>
+        </table>
+
+        <div class="concept gold">
+          <strong>Recursive accept_client() — clever but risky</strong>
+          Instead of a while(1) loop, WebSocketServer::accept_client() calls itself after spawning each client task. This avoids stack buildup in the main server loop but means each accepted client call is a new stack frame on the calling task. With many rapid connections, this could overflow the server task's stack. The while(1) version is safer.
+        </div>
+
+        <p><strong>Lambda task creation:</strong></p>
+        <div class="code-snippet">
+<span class="fn">xTaskCreate</span>([](void *param) {
+    <span class="kw">WebSocketClient</span> client((<span class="kw">int</span>)(intptr_t)param);
+    client.<span class="fn">handle</span>();
+}, <span class="str">"handle_client"</span>, <span class="num">8192</span>, (void *)(intptr_t)sock, <span class="num">5</span>, NULL);
+        </div>
+        <p>The lambda captures nothing (stateless), so it's compatible with the C-style function pointer FreeRTOS expects. Clever use of C++11 in an ESP-IDF context.</p>
+
+        <div class="tag-row">
+          <span class="tag pro">✓ Clean OOP — each class has single responsibility</span>
+          <span class="tag pro">✓ WIFI_PS_NONE — latency optimisation preserved</span>
+          <span class="tag pro">✓ TCP_NODELAY on every client socket</span>
+          <span class="tag con">✗ Recursive accept — potential stack overflow under rapid connections</span>
+          <span class="tag con">✗ All classes in one file — harder to maintain as it grows</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================================================ -->
+  <div class="section" id="cpp">
+    <div class="section-header"><span class="section-num">12</span><h2>esp32_websocket_cpp — Final Modular OOP C++ Architecture</h2></div>
+    <p>This is the most production-ready version. Each concern is isolated into its own file pair.</p>
+
+    <div class="grid2">
+      <div class="file-card">
+        <div class="file-header"><div class="file-icon fi-h">.H</div><span class="file-name">config.h</span></div>
+        <div class="file-body"><p>Centralized constants: <code>#define MAX_PAYLOAD_LEN 1024</code> and <code>#define PORT 8080</code>. Change in one place, affects everywhere.</p></div>
+      </div>
+      <div class="file-card">
+        <div class="file-header"><div class="file-icon fi-h">.H</div><span class="file-name">utils.h + utils.cpp</span></div>
+        <div class="file-body"><p><code>class Utils</code> with <code>static strcasestr_custom()</code>. Reusable across any file. No state — purely functional.</p></div>
+      </div>
+      <div class="file-card">
+        <div class="file-header"><div class="file-icon fi-cpp">.CPP</div><span class="file-name">wifi_manager.cpp</span></div>
+        <div class="file-body"><p><code>WiFiManager::init()</code> — complete WiFi STA setup with WIFI_PS_NONE. <code>extern "C" void app_main()</code> entry point uses C++ objects cleanly.</p></div>
+      </div>
+      <div class="file-card">
+        <div class="file-header"><div class="file-icon fi-cpp">.CPP</div><span class="file-name">websocket_server.cpp</span></div>
+        <div class="file-body"><p>Creates the TCP listen socket, sets TCP_NODELAY, spawns a <code>WebSocketHandler</code> heap-object per client via lambda. The handler is <code>new</code>-allocated and <code>delete</code>-d inside the lambda after <code>handle_client_task()</code> returns — correct RAII usage.</p></div>
+      </div>
+    </div>
+
+    <div class="file-card">
+      <div class="file-header">
+        <div class="file-icon fi-cpp">.CPP</div>
+        <span class="file-name">websocket_handler.cpp</span>
+        <span class="file-path">esp32_websocket_cpp/main/</span>
+      </div>
+      <div class="file-body">
+        <p>The heart of the library. Implements the full WebSocket client lifecycle: handshake → frame loop → disconnect cleanup.</p>
+        <div class="code-snippet">
+<span class="cm">// Heap-allocated handler, cleaned up after task finishes</span>
+<span class="kw">WebSocketHandler</span> *handler = <span class="kw">new</span> <span class="fn">WebSocketHandler</span>(sock);
+<span class="fn">xTaskCreate</span>([](void *param) {
+    <span class="kw">WebSocketHandler</span> *h = static_cast&lt;<span class="kw">WebSocketHandler</span>*&gt;(param);
+    h-><span class="fn">handle_client_task</span>();
+    <span class="kw">delete</span> h;          <span class="cm">// Proper cleanup — no memory leak</span>
+    vTaskDelete(NULL); <span class="cm">// Delete the FreeRTOS task itself</span>
+}, <span class="str">"handle_client"</span>, <span class="num">8192</span>, handler, <span class="num">5</span>, NULL);
+        </div>
+
+        <div class="tag-row">
+          <span class="tag pro">✓ Heap-allocated handler with delete — no leak</span>
+          <span class="tag pro">✓ while(1) accept loop — no stack overflow risk</span>
+          <span class="tag pro">✓ All latency optimisations preserved</span>
+          <span class="tag pro">✓ extern "C" app_main — correct C/C++ linkage</span>
+          <span class="tag pro">✓ Full opcode support — text, binary, ping, pong, close</span>
+          <span class="tag pro">✓ Config centralised in config.h</span>
+          <span class="tag note">⚠ Still no timeout on blocking recv() calls</span>
+          <span class="tag note">⚠ Could add SO_RCVTIMEO for robustness</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================================================ -->
+  <div class="section" id="rtos">
+    <div class="section-header"><span class="section-num">13</span><h2>rtos — CMake RTOS Experiment</h2></div>
+    <div class="file-card">
+      <div class="file-header"><div class="file-icon fi-cpp">.CPP</div><span class="file-name">rtos.cpp</span></div>
+      <div class="file-body">
+        <p>A CMake-generated C++ hello-world that reads version numbers from CMake variables (<code>rtos_VERSION_MAJOR/MINOR</code>). This is the default project generated by a CMake init — not FreeRTOS code. It was an exploration of how CMake project scaffolding works with ESP-IDF.</p>
+        <div class="tag-row"><span class="tag note">⚠ Not actually RTOS code — just CMake boilerplate exploration</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================================================ -->
+  <div class="section" id="bt">
+    <div class="section-header"><span class="section-num">14</span><h2>bt_l2cap_server — Bluetooth Classic L2CAP Server</h2></div>
+
+    <div class="file-card">
+      <div class="file-header">
+        <div class="file-icon fi-bt">BT</div>
+        <span class="file-name">main.c + bt_app_core.c/h</span>
+        <span class="file-path">bt_l2cap_server/main/</span>
+      </div>
+      <div class="file-body">
+        <p>This is the most advanced and different module — exploring Bluetooth Classic as an alternative transport to WiFi+WebSocket. Key concepts:</p>
+
+        <h3 style="margin-top:12px">L2CAP (Logical Link Control and Adaptation Protocol)</h3>
+        <p>L2CAP sits directly above the Bluetooth baseband layer. It provides channel-based communication, fragmentation/reassembly, and QoS. It's like the "TCP" of Bluetooth — lower level than RFCOMM (which is the "serial port" abstraction), lower latency, higher throughput potential.</p>
+
+        <h3>SDP (Service Discovery Protocol)</h3>
+        <p>Before connecting, a Bluetooth client uses SDP to discover what services the server offers and which PSM (Protocol/Service Multiplexer — like a port number) to connect on. You registered a custom SDP record with a dynamic PSM <code>0x1001</code>.</p>
+
+        <h3>bt_app_core.c — The Message Queue Architecture</h3>
+        <div class="concept">
+          <strong>Why the message queue pattern?</strong>
+          Bluetooth callbacks run in the Bluetooth controller context — not safe to call ESP-IDF WiFi/socket APIs from there. The solution: callbacks post a message to a FreeRTOS queue, and a separate "BtAppTask" dequeues and processes them in a safe context. This is the standard pattern for event-driven embedded BT development.
+        </div>
+
+        <div class="code-snippet">
+<span class="cm">// bt_app_core.c: FreeRTOS queue-based dispatcher</span>
+s_bt_app_task_queue = <span class="fn">xQueueCreate</span>(<span class="num">10</span>, <span class="kw">sizeof</span>(bt_app_msg_t));
+<span class="fn">xTaskCreate</span>(bt_app_task_handler, <span class="str">"BtAppTask"</span>, <span class="num">3072</span>, NULL,
+            configMAX_PRIORITIES - <span class="num">3</span>, &s_bt_app_task_handle);
+<span class="cm">// High priority (MAX-3) ensures BT events are processed quickly</span>
+        </div>
+
+        <div class="tag-row">
+          <span class="tag pro">✓ Classic BT L2CAP — lower overhead than WiFi+TCP+WS stack</span>
+          <span class="tag pro">✓ SDP registration — discoverable by standard BT clients</span>
+          <span class="tag pro">✓ Message queue pattern — safe BT event handling</span>
+          <span class="tag pro">✓ BLE memory released (esp_bt_controller_mem_release) — saves RAM</span>
+          <span class="tag con">✗ Known bug: ESP_BT_L2CAP_CLOSE_EVT calls l2cap_start_srv again (noted in comment)</span>
+          <span class="tag con">✗ 500ms vTaskDelay on empty read — high latency for low-data scenarios</span>
+          <span class="tag note">⚠ L2CAP requires pairing/authentication — more setup than WiFi for quick prototyping</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================================================ -->
+  <div class="section" id="concepts">
+    <div class="section-header"><span class="section-num">15</span><h2>Core Concepts — Deep Explanations</h2></div>
+
+    <h3>Nagle's Algorithm — The Star of Your Internship</h3>
+    <div class="concept">
+      <strong>What is Nagle's Algorithm?</strong>
+      Invented by John Nagle in 1984. The rule: if there is unacknowledged data in flight, buffer new small packets until either (a) the buffer is full (MSS), or (b) the ACK arrives. This was designed for telnet over slow WANs where sending 1-byte packets for each keypress was wasteful. For your robotics use case — sending small sensor readings or commands — Nagle's algorithm adds up to 40ms of buffering delay before each send. Disabling it with TCP_NODELAY is the single most impactful latency fix.
+    </div>
+
+    <h3>TCP vs WebSocket — Why You Need WebSocket</h3>
+    <table>
+      <tr><th>Aspect</th><th>Raw TCP</th><th>WebSocket</th></tr>
+      <tr><td>Browser support</td><td>None — browsers can't do raw TCP</td><td>Native — JavaScript WebSocket API</td></tr>
+      <tr><td>Message framing</td><td>Stream — no message boundaries</td><td>Framed — each send() is one message</td></tr>
+      <tr><td>Setup</td><td>3-way TCP handshake</td><td>TCP handshake + HTTP Upgrade</td></tr>
+      <tr><td>Bidirectional</td><td>Yes</td><td>Yes, with lower overhead than HTTP polling</td></tr>
+      <tr><td>Firewall-friendly</td><td>Only on standard ports</td><td>Uses port 80/443 — passes through most firewalls</td></tr>
+      <tr><td>Overhead per message</td><td>0 bytes (pure stream)</td><td>2-10 bytes (WS frame header)</td></tr>
+    </table>
+
+    <h3>lwIP — The TCP Stack Under Everything</h3>
+    <div class="concept blue">
+      <strong>lwIP (Lightweight IP)</strong>
+      All your socket calls — socket(), bind(), send(), recv() — go through lwIP, not the Linux kernel. lwIP is a tiny open-source TCP/IP stack designed for embedded systems. Espressif integrated it into ESP-IDF. The <code>#include "lwip/sockets.h"</code> header provides a POSIX-compatible socket API on top of lwIP — which is why your 1stLab Linux code and your ESP32 code look so similar.
+    </div>
+
+    <h3>mbedTLS — Why SHA-1 + Base64 in ESP-IDF</h3>
+    <div class="concept">
+      <strong>mbedTLS on ESP32</strong>
+      Normally used for TLS/SSL. You used it for WebSocket handshake key generation because it's already available in ESP-IDF. <code>mbedtls_sha1()</code> and <code>mbedtls_base64_encode()</code> are well-tested, hardware-accelerated cryptographic functions. The ESP32 has a hardware SHA accelerator — so your SHA-1 computation is very fast even on a microcontroller.
+    </div>
+
+    <h3>FreeRTOS — The OS Running Everything</h3>
+    <table>
+      <tr><th>Concept</th><th>What it is</th><th>Used in your code</th></tr>
+      <tr><td>xTaskCreate</td><td>Spawns a new task (thread)</td><td>Per-client handler tasks</td></tr>
+      <tr><td>vTaskDelete(NULL)</td><td>Task deletes itself</td><td>At end of handle_client_task</td></tr>
+      <tr><td>xQueueCreate</td><td>FIFO message queue between tasks</td><td>bt_app_core.c BT event dispatch</td></tr>
+      <tr><td>portTICK_PERIOD_MS</td><td>Converts ms to RTOS ticks (1 tick = 1ms typically)</td><td>vTaskDelay in BT L2CAP read</td></tr>
+      <tr><td>configMAX_PRIORITIES</td><td>Highest task priority value</td><td>BT app task priority</td></tr>
+    </table>
+  </div>
+
+  <!-- ================================================ -->
+  <div class="section" id="interview">
+    <div class="section-header"><span class="section-num">16</span><h2>Interview Q&amp;A — Be Ready for These</h2></div>
+
+    <div class="interview-q">
+      <div class="q">Q: What is Nagle's algorithm and why did you disable it?</div>
+      <div class="a">A: Nagle's algorithm buffers small TCP packets until either the buffer fills to MSS size or an ACK arrives for previous data. This reduces network overhead for chatty connections but adds up to 40ms latency per small message — unacceptable for real-time robot control. We set TCP_NODELAY = 1 on every accepted socket to force immediate transmission of each message.</div>
+    </div>
+
+    <div class="interview-q">
+      <div class="q">Q: Explain the WebSocket handshake from scratch.</div>
+      <div class="a">A: The browser sends an HTTP GET with "Upgrade: websocket" and a base64-encoded random 16-byte nonce as "Sec-WebSocket-Key". The server concatenates this key with the RFC 6455 magic GUID "258EAFA5-E914-47DA-95CA-C5AB0DC85B11", computes SHA-1, base64-encodes the result, and returns it as "Sec-WebSocket-Accept" in a "101 Switching Protocols" response. After this, both sides communicate using binary WebSocket frames — not HTTP.</div>
+    </div>
+
+    <div class="interview-q">
+      <div class="q">Q: How does your server handle multiple clients?</div>
+      <div class="a">A: Two approaches. In websocket_handshake, we spawn a FreeRTOS task (xTaskCreate) for each accepted client — true concurrency, ~8KB stack per client. In websocket_handshake2, we use a select()-based single-threaded event loop with MSG_DONTWAIT non-blocking reads — more memory-efficient but serialised. The final OOP version uses FreeRTOS tasks with heap-allocated handler objects that self-delete when the client disconnects.</div>
+    </div>
+
+    <div class="interview-q">
+      <div class="q">Q: What is the difference between TCP and UDP and when would you use each?</div>
+      <div class="a">A: TCP is connection-oriented, guarantees delivery, ordering, and error correction via retransmission and ACKs. UDP is connectionless, faster, no guarantees. For WebSocket we need TCP because the protocol requires reliable, ordered delivery. For a live video stream or gaming, UDP with application-layer error correction is better — latency matters more than perfect reliability.</div>
+    </div>
+
+    <div class="interview-q">
+      <div class="q">Q: Why did you use WIFI_PS_NONE?</div>
+      <div class="a">A: ESP32's default WiFi power saving mode puts the radio into periodic sleep between beacon intervals (~100ms). Incoming packets are buffered at the access point and delivered on wake. This adds non-deterministic latency of up to 100ms. For real-time bidirectional communication, we set WIFI_PS_NONE to keep the radio always-on. The trade-off is higher current draw (~100mA more), which is acceptable for a tethered robot application.</div>
+    </div>
+
+    <div class="interview-q">
+      <div class="q">Q: What is L2CAP and how does it differ from using WiFi+TCP?</div>
+      <div class="a">A: L2CAP (Logical Link Control and Adaptation Protocol) is a Bluetooth protocol layer that provides channel-based communication directly over Bluetooth baseband — no IP stack involved. It has lower stack overhead than WiFi+TCP+WebSocket and is better suited for short-range, peer-to-peer communication. However, it requires device pairing, has lower throughput than WiFi (typically ~1-3 Mbps vs 50+ Mbps), and shorter range (~10m vs 50m). We explored it as an alternative for use cases where WiFi infrastructure isn't available.</div>
+    </div>
+
+    <div class="interview-q">
+      <div class="q">Q: What are TCP flags and how does a connection close?</div>
+      <div class="a">A: TCP uses flags in its header — SYN (synchronise sequence numbers), ACK (acknowledge), FIN (finish), RST (reset), PSH (push data immediately). A connection closes with a 4-way handshake: client sends FIN, server ACKs, server sends FIN, client ACKs. A RST forcefully closes without negotiation. In our WebSocket code, we handle the WS close frame (opcode 0x8) gracefully before calling close() on the socket.</div>
+    </div>
+
+    <div class="interview-q">
+      <div class="q">Q: Why does your OOP version use extern "C" for app_main?</div>
+      <div class="a">A: C++ uses name mangling — it encodes function parameter types into the symbol name to support overloading. ESP-IDF looks for the symbol "app_main" by its exact C name. Without extern "C", the compiler would emit a mangled symbol like "_Z8app_mainv" which the linker can't find. extern "C" tells the compiler to use C linkage (no mangling) for that function.</div>
+    </div>
+  </div>
+
+  <!-- ================================================ -->
+  <div class="section" id="enhancements">
+    <div class="section-header"><span class="section-num">17</span><h2>Enhancements &amp; GitHub Publishing Tips</h2></div>
+
+    <h3>Critical Bugs to Fix Before GitHub</h3>
+    <div class="file-card">
+      <div class="file-body">
+        <div class="concept red">
+          <strong>1. Remove hardcoded passwords from all files</strong>
+          "gargi04**2006", "doraemon04**2006", "gargi04**2006" — these appear in multiple files. Move to a Kconfig/menuconfig system or a gitignored secrets.h. Never push credentials to public repos.
+        </div>
+        <div class="concept red">
+          <strong>2. Fix recv() partial reads</strong>
+          TCP is a stream — a single recv() may not return the full expected bytes. For the 2-byte header: <code>while(bytes_read &lt; 2) bytes_read += recv(sock, hdr+bytes_read, 2-bytes_read, 0);</code>
+        </div>
+        <div class="concept gold">
+          <strong>3. Add SO_RCVTIMEO timeout to all recv() calls</strong>
+          Without a timeout, a client that connects but never sends can block a task forever. Set a 30-second receive timeout on every accepted socket.
+        </div>
+      </div>
+    </div>
+
+    <h3>Enhancements to Add</h3>
+    <table>
+      <tr><th>Enhancement</th><th>Impact</th><th>Difficulty</th></tr>
+      <tr><td>EventGroup for WiFi IP-ready signal</td><td>Eliminates race condition between WiFi connect and socket bind</td><td>Low</td></tr>
+      <tr><td>Broadcast to all clients</td><td>One message from any client echoed to all — enables multi-device dashboards</td><td>Medium</td></tr>
+      <tr><td>Ping keepalive timer</td><td>Detect dead clients; send WS Ping every 30s, drop if no Pong in 5s</td><td>Medium</td></tr>
+      <tr><td>Fragment reassembly</td><td>Handle multi-fragment WS messages (FIN=0 frames)</td><td>Medium</td></tr>
+      <tr><td>WSS (WebSocket Secure)</td><td>Add TLS using mbedTLS — already have the library, just wrap the socket</td><td>High</td></tr>
+      <tr><td>Kconfig credentials</td><td>idf.py menuconfig for WiFi SSID/pass — professional ESP-IDF practice</td><td>Low</td></tr>
+      <tr><td>Latency measurement</td><td>Send timestamp in WS message, echo back, calculate RTT — prove your optimisations work</td><td>Low</td></tr>
+    </table>
+
+    <h3>Suggested GitHub README Structure</h3>
+    <div class="concept blue">
+      <strong>Sections to include:</strong>
+      (1) Project overview and motivation, (2) Architecture diagram showing the protocol stack, (3) Feature list with TCP_NODELAY and WIFI_PS_NONE explained, (4) Getting started (idf.py build/flash), (5) Folder structure with one-line descriptions of each, (6) Benchmark results — latency before/after Nagle disable, (7) Known limitations, (8) Contributing guide, (9) License. Tag the repo with: esp32, websocket, embedded, rtos, freertos, esp-idf, iot, low-latency.
+    </div>
+
+    <div class="grid3" style="margin-top:24px">
+      <div class="stat-box">
+        <div class="num">10</div>
+        <div class="label">Distinct modules built</div>
+      </div>
+      <div class="stat-box">
+        <div class="num">2</div>
+        <div class="label">Latency optimisations applied</div>
+      </div>
+      <div class="stat-box">
+        <div class="num">4</div>
+        <div class="label">Languages: C, C++, CMake, Asm</div>
+      </div>
+    </div>
+
+    <div class="concept" style="margin-top:28px">
+      <strong>Bottom line for interviews</strong>
+      You didn't just use a library. You implemented the WebSocket protocol from scratch on a microcontroller — that means you understand SHA-1, Base64, HTTP upgrade, TCP byte-stream framing, XOR masking, opcode parsing, and every layer from the WiFi radio up to the JavaScript browser API. That's rare and impressive. Lead with that.
+    </div>
+  </div>
+
+</div>
+</body>
+</html>
